@@ -1,10 +1,16 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import Weatherinfo from './componets/WeatherInfo';
+import UnitsPicker from './componets/UnitsPicker';
+import ReloadIcon from './componets/ReloadIcon';
+import WeatherDetails from './componets/WeatherDetails';
+import {colors} from './utils/index';
+import { WATHER_API_KEY } from 'react-native-dotenv';
 
-const WATHER_API_KEY = '81eda6665a3c88aa8830ddfe6f466bd5';
+const {PRIMARY_COLOR, SECONDARY_COLOR, BORDER_COLOR} = colors;
+
 const BASE_WEATHER_URL = 'https://api.openweathermap.org/data/2.5/weather?';
 
 export default function App() {
@@ -15,9 +21,11 @@ export default function App() {
 
   useEffect(() => {
     load();
-  },[]);
+  },[unitSystem]);
 
   async function load() {
+    setCurrentWeather(null);
+    setErrorMessage(null);
     try {
       
       let { status } = await Location.requestPermissionsAsync()
@@ -52,25 +60,34 @@ export default function App() {
       <View style={styles.container}>
         <StatusBar style="auto" />
         <View style={styles.main}>
-          <Weatherinfo currentWeather={currentWeather}/>
+          <UnitsPicker unitSystem={unitSystem} setUnitSystem={setUnitSystem} />
+          <ReloadIcon load={load} />
+          <Weatherinfo currentWeather={currentWeather} />
         </View>
+        <WeatherDetails currentWeather={currentWeather} unitSystem={unitSystem} />
+      </View>
+    );
+  } else if ( errorMessage) {
+    return (
+      <View style={styles.container}>
+        <ReloadIcon load={load} />
+        <Text style={{textAlign: 'center'}}>{errorMessage}</Text>
+        <StatusBar style="auto" />
       </View>
     );
   } else {
     return (
       <View style={styles.container}>
-        <Text>{errorMessage}</Text>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
         <StatusBar style="auto" />
       </View>
-    );
+    )
   }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
     justifyContent: 'center',
   },
   main: {
